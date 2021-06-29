@@ -5,12 +5,12 @@
 #AutoIt3Wrapper_Compile_Both=y
 #AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_Res_Description=Detection Script to help identify why your PC isn't Windows 11 Release Ready
-#AutoIt3Wrapper_Res_Fileversion=2.3.0.0
+#AutoIt3Wrapper_Res_Fileversion=2.3.0.1
 #AutoIt3Wrapper_Res_ProductName=WhyNotWin11
 #AutoIt3Wrapper_Res_ProductVersion=2.3.0
 #AutoIt3Wrapper_Res_LegalCopyright=Robert Maehl, using LGPL 3 License
-#AutoIt3Wrapper_Res_Language=1049
-#AutoIt3Wrapper_Res_requestedExecutionLevel=highestAvailable
+#AutoIt3Wrapper_Res_Language=1033
+#AutoIt3Wrapper_Res_requestedExecutionLevel=asInvoker
 #AutoIt3Wrapper_Res_Icon_Add=assets\git.ico
 #AutoIt3Wrapper_Res_Icon_Add=assets\pp.ico
 #AutoIt3Wrapper_Res_Icon_Add=assets\dis.ico
@@ -20,7 +20,7 @@
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 Global $aResults[11][3]
-Global $sVersion = "2.3.0.0"
+Global $sVersion = "2.3.0.1"
 Global $aOutput[2] = ["", ""]
 
 If @OSVersion = 'WIN_10' Then DllCall("User32.dll", "bool", "SetProcessDpiAwarenessContext" , "HWND", "DPI_AWARENESS_CONTEXT"-1)
@@ -195,7 +195,6 @@ Func ExtractFiles()
 			FileInstall(".\langs\041B.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\041B.lang", $FC_OVERWRITE)
 			FileInstall(".\langs\0804.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\0804.lang", $FC_OVERWRITE)
 			FileInstall(".\langs\1034.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1034.lang", $FC_OVERWRITE)
-			FileInstall(".\langs\1036.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1036.lang", $FC_OVERWRITE)
 			FileInstall(".\langs\1053.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1053.lang", $FC_OVERWRITE)
 			FileInstall(".\langs\1055.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1055.lang", $FC_OVERWRITE)
 			FileDelete(@LocalAppDataDir & "\WhyNotWin11\langs\version")
@@ -231,7 +230,6 @@ Func ExtractFiles()
 			FileInstall(".\langs\041B.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\041B.lang")
 			FileInstall(".\langs\0804.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\0804.lang")
 			FileInstall(".\langs\1034.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1034.lang")
-			FileInstall(".\langs\1036.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1036.lang")
 			FileInstall(".\langs\1053.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1053.lang")
 			FileInstall(".\langs\1055.lang", @LocalAppDataDir & "\WhyNotWin11\Langs\1055.lang")
 			FileWrite(@LocalAppDataDir & "\WhyNotWin11\langs\version", $sVersion)
@@ -335,7 +333,7 @@ Func Main()
 	GUICtrlSetBkColor(-1, _HighContrast(0xF2F2F2))
 
 	If Not (@MUILang = "0409") Then
-		GUICtrlCreateLabel(_Translate("Translation by") & " " & _GetTranslationCredit(), 130, 570, 250, 20, $SS_CENTERIMAGE)
+		GUICtrlCreateLabel(_Translate("Translation by") & " " & _GetTranslationCredit(), 130, 560, 310, 40)
 		GUICtrlSetBkColor(-1, _HighContrast(0xF2F2F2))
 	EndIf
 
@@ -539,7 +537,7 @@ Func Main()
 	EndIf
 	If $aMem = 0 Then
 		$aMem = MemGetStats()
-		$aMem = $aMem[1]
+		$aMem = Round($aMem[1]/1048576, 1)
 		$aMem = Ceiling($aMem)
 	EndIf
 
@@ -771,6 +769,16 @@ Func _GDIPlus_GraphicsGetDPIRatio($iDPIDef = 96)
     Return $aresults
 EndFunc   ;==>_GDIPlus_GraphicsGetDPIRatio
 
+Func _GetFile($sFile, $sFormat = $FO_READ)
+    Local Const $hFileOpen = FileOpen($sFile, $sFormat)
+    If $hFileOpen = -1 Then
+        Return SetError(1, 0, '')
+    EndIf
+    Local Const $sData = FileRead($hFileOpen)
+    FileClose($hFileOpen)
+    Return $sData
+EndFunc   ;==>_GetFile
+
 Func _GetTranslationCredit()
 	Return INIRead(@LocalAppDataDir & "\WhyNotWin11\Langs\" & @MUILang & ".lang", "MetaData", "Translator", "???")
 EndFunc
@@ -787,6 +795,23 @@ Func _HighContrast($sColor)
 	EndIf
 
 EndFunc
+
+Func _INIUnicode($sINI)
+    If FileExists($sINI) = 0 Then
+        Return FileClose(FileOpen($sINI, $FO_OVERWRITE + $FO_UNICODE))
+    Else
+        Local Const $iEncoding = FileGetEncoding($sINI)
+        Local $fReturn = True
+        If Not ($iEncoding = $FO_UNICODE) Then
+            Local $sData = _GetFile($sINI, $iEncoding)
+            If @error Then
+                $fReturn = False
+            EndIf
+            _SetFile($sData, $sINI, $FO_APPEND + $FO_UNICODE)
+        EndIf
+        Return $fReturn
+    EndIf
+EndFunc   ;==>_INIUnicode
 
 Func _SetBannerText($hBannerText, $hBanner)
 
@@ -851,6 +876,17 @@ Func _SetBkIcon($ControlID, $iBackground, $sIcon, $iIndex, $iWidth, $iHeight)
     Return SetError(0, 0, 1)
 EndFunc   ;==>_SetBkIcon
 
+Func _SetFile($sString, $sFile, $iOverwrite = $FO_READ)
+    Local Const $hFileOpen = FileOpen($sFile, $iOverwrite + $FO_APPEND)
+    FileWrite($hFileOpen, $sString)
+    FileClose($hFileOpen)
+    If @error Then
+        Return SetError(1, 0, False)
+    EndIf
+    Return True
+EndFunc   ;==>_SetFile
+
 Func _Translate($sString)
-	Return _WinAPI_OemToChar(INIRead(@LocalAppDataDir & "\WhyNotWin11\Langs\" & @MUILang & ".lang", "Strings", $sString, $sString))
+	_INIUnicode(@LocalAppDataDir & "\WhyNotWin11\Langs\" & @MUILang & ".lang")
+	Return INIRead(@LocalAppDataDir & "\WhyNotWin11\Langs\" & @MUILang & ".lang", "Strings", $sString, $sString)
 EndFunc
