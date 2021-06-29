@@ -9,7 +9,7 @@
 #AutoIt3Wrapper_Res_ProductName=WhyNotWin11
 #AutoIt3Wrapper_Res_ProductVersion=2.3.0
 #AutoIt3Wrapper_Res_LegalCopyright=Robert Maehl, using LGPL 3 License
-#AutoIt3Wrapper_Res_Language=1033
+#AutoIt3Wrapper_Res_Language=1049
 #AutoIt3Wrapper_Res_requestedExecutionLevel=highestAvailable
 #AutoIt3Wrapper_Res_Icon_Add=assets\git.ico
 #AutoIt3Wrapper_Res_Icon_Add=assets\pp.ico
